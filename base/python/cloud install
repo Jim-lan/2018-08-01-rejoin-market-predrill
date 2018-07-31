@@ -1,0 +1,45 @@
+#!/bin/bash
+
+## -------------------------------------------------------------------------------------------------------------------------
+## This script is to deploy stale file check to LOB3 and add crontab
+##
+## Date : 07 23 2018
+## Author : Jim Lan
+## --------------------------------------------------------------------------------------------------------------------------
+
+DATE=$(date '+%Y%m%d')
+out_dir='/tmp'
+log_file="${out_dir}/day2.stalefile_monitor.${DATE}.log"
+
+SERVICE_ACCOUNT_ID=`ls -lrt /td/hpe/ | grep licenses | awk '{print $3}'`
+SERVICE_ACCOUNT_GRP=`ls -lrt /td/hpe/ | grep licenses | awk '{print $4}'`
+
+echo "Value of SERVICE_ACCOUNT_ID is $SERVICE_ACCOUNT_ID and SERVICE_ACCOUNT_GRP is $SERVICE_ACCOUNT_GRP" | tee -a $log_file
+
+## deploy bin files
+
+sudo cp bin/stalefile_monitor.py /td/download/scripts/ 1>> $log_file 2>&1
+sudo cp bin/stalefile_monitor.sh /td/download/scripts/ 1>> $log_file 2>&1
+sudo cp bin/stalefile_monitor.conf /td/download/scripts/ 1>> $log_file 2>&1
+
+sudo chown -R ${SERVICE_ACCOUNT_ID}:${SERVICE_ACCOUNT_GRP} /td/download/scripts/stalefile* 1>> $log_file 2>&1
+sudo chown -R ${SERVICE_ACCOUNT_ID}:${SERVICE_ACCOUNT_GRP} /td/download/scripts/stalefile* 1>> $log_file 2>&1
+
+sudo chmod -R 755 /td/download/scripts/stalefile* 1>> $log_file 2>&1
+sudo chmod -R 755 /td/download/scripts/stalefile* 1>> $log_file 2>&1
+
+## Verification steps
+printf "INFO:  hostname:\n" 1>> $log_file 2>&1
+hostname 1>> $log_file 2>&1
+
+echo " list /td/download/scripts/ --" | tee -a $log_file
+ls -ltra /td/download/scripts/ 1>> $log_file 2>&1
+
+
+# add crontab
+sudo su - ${SERVICE_ACCOUNT_ID} -c "(crontab -l 2>/dev/null; echo '15 * * * *  /td/download/scripts/stalefile_monitor.sh') | crontab -"
+
+echo " list crontab jobs under $SERVICE_ACCOUNT_ID" | tee -a $log_file
+sudo su - ${SERVICE_ACCOUNT_ID} -c "crontab -l 2>/dev/null" | tee -a $log_file
+
+exit;
